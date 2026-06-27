@@ -1,0 +1,359 @@
+C:\unbinding\hobby\flutter\pocket-server\app>type android\app\build.gradle.kts
+plugins {
+    id("com.android.application")
+    id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
+android {
+    namespace = "com.example.pocket_server"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.pocket_server"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+C:\unbinding\hobby\flutter\pocket-server\app>
+
+
+
+
+
+
+
+c:\unbinding\hobby\adb\platform-tools>04-04 19:10:30.051   502   557 E cutils  : Failed to open(/data/misc/profiles/cur/0/com.example.pocket_server/primary.prof): No such file or directory
+'04-04' is not recognized as an internal or external command,
+operable program or batch file.
+
+c:\unbinding\hobby\adb\platform-tools>04-04 19:10:30.051   502   557 E installd: Failed to prepare /data/misc/profiles/cur/0/com.example.pocket_server/primary.prof: No such file or directory
+'04-04' is not recognized as an internal or external command,
+operable program or batch file.
+
+c:\unbinding\hobby\adb\platform-tools>04-04 19:10:30.051   841   881 E ArtManagerService: Failed to prepare profile for com.example.pocket_server:/data/app/com.example.pocket_server-2OMPqmatQSi4_S6oF09XgA==/base.apk
+'04-04' is not recognized as an internal or external command,
+operable program or batch file.
+
+c:\unbinding\hobby\adb\platform-tools>
+c:\unbinding\hobby\adb\platform-tools>c:\unbinding\hobby\adb\platform-tools>
+c:\unbinding\hobby\adb\platform-tools>
+c:\unbinding\hobby\adb\platform-tools>
+
+
+
+
+
+
+
+
+c:\unbinding\hobby\adb\platform-tools>adb -s 52873213734036 logcat -v time *:E 2>&1
+--------- beginning of system
+04-04 14:57:00.111 E/ActivityThread( 7618): Failed to find provider info for com.hhst.litube.DropDataProvider
+04-04 15:30:52.966 E/ActivityThread( 9904): Failed to find provider info for com.ushareit.adjust
+04-04 15:47:24.675 E/ActivityThread(10497): Failed to find provider info for com.google.android.deskclock.provider
+04-04 16:35:01.369 E/ActivityThread(11106): Failed to find provider info for com.ushareit.adjust
+04-04 18:35:01.252 E/ActivityThread(12014): Failed to find provider info for com.ushareit.adjust
+04-04 18:58:10.700 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+04-04 18:58:11.298 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+04-04 18:58:23.725 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+04-04 18:58:24.126 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+04-04 18:58:27.912 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+04-04 18:59:13.773 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+--------- beginning of main
+04-04 19:08:41.917 E/id.partnersetu(12807): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:08:49.076 E/AppIdleHistory(  841): Error writing app idle file for user 0
+04-04 19:08:49.095 E/AppIdleHistory(  841): Error writing app idle file for user 10
+04-04 19:10:14.962 E/PhoneInterfaceManager( 1079): [PhoneIntfMgr] getCarrierPackageNamesForIntent: No UICC
+04-04 19:10:14.962 E/PhoneInterfaceManager( 1079): [PhoneIntfMgr] getCarrierPackageNamesForIntent: No UICC
+04-04 19:10:26.088 E/PackageManager(  841): handleStartCopy: onInt = true ephemeral = false
+04-04 19:10:27.311 E/AbstractLogEventBuilder( 6138): The provided ProductIdOrigin 3 is not one of the process-level expected values: 1 or 2
+04-04 19:10:29.166 E/AbstractLogEventBuilder( 6138): The provided ProductIdOrigin 3 is not one of the process-level expected values: 1 or 2
+04-04 19:10:29.674 E/AbstractLogEventBuilder( 6138): The provided ProductIdOrigin 3 is not one of the process-level expected values: 1 or 2
+04-04 19:10:29.688 E/AbstractLogEventBuilder( 6138): The provided ProductIdOrigin 3 is not one of the process-level expected values: 1 or 2
+04-04 19:10:29.698 E/Finsky  ( 6138): [632] Package name null is not an installed package
+04-04 19:10:30.051 E/cutils  (  502): Failed to open(/data/misc/profiles/cur/0/com.example.pocket_server/primary.prof): No such file or directory
+04-04 19:10:30.051 E/installd(  502): Failed to prepare /data/misc/profiles/cur/0/com.example.pocket_server/primary.prof: No such file or directory
+04-04 19:10:30.051 E/ArtManagerService(  841): Failed to prepare profile for com.example.pocket_server:/data/app/com.example.pocket_server-2OMPqmatQSi4_S6oF09XgA==/base.apk
+04-04 19:10:30.118 E/        (  502): Couldn't opendir /data/app/vmdl473359481.tmp: No such file or directory
+04-04 19:10:30.118 E/installd(  502): Failed to delete /data/app/vmdl473359481.tmp: No such file or directory
+04-04 19:10:38.833 E/nary.hyperdroi( 6078): No package ID 47 found for ID 0x47470002.
+04-04 19:10:39.589 E/ResolverController(  418): No valid NAT64 prefix (100, <unspecified>/0)
+04-04 19:11:30.454 E/d.process.acor(12941): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:11:30.884 E/ContactsFTS(12941): Delete invalid contacts search index in 2ms.
+04-04 19:11:30.885 E/ContactsFTS(12941): Delete invalid contacts search index in 3ms.
+04-04 19:16:08.696 E/droid.apps.map(13018): Unknown bits set in runtime_flags: 0x8000
+04-04 19:16:08.704 E/droid.apps.map(13018): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:16:08.722 E/s.youtube.musi(13035): Unknown bits set in runtime_flags: 0x8000
+04-04 19:16:08.742 E/s.youtube.musi(13035): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:16:10.160 E/on.gearhead:ca(13232): Unknown bits set in runtime_flags: 0x8000
+04-04 19:16:10.174 E/on.gearhead:ca(13232): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:16:10.381 E/bsmg    (13054): (REDACTED) #triggerSync - failed to get account / auth token for user. Source %s
+04-04 19:16:10.381 E/bsmg    (13054): bslz: failed to get account / auth token for user
+04-04 19:16:10.381 E/bsmg    (13054):   at bsls.a(PG:55)
+04-04 19:16:10.381 E/bsmg    (13054):   at bsmf.invokeSuspend(PG:578)
+04-04 19:16:10.381 E/bsmg    (13054):   at fkyt.resumeWith(PG:11)
+04-04 19:16:10.381 E/bsmg    (13054):   at fljd.run(PG:107)
+04-04 19:16:10.381 E/bsmg    (13054):   at ejtu.run(PG:3)
+04-04 19:16:10.381 E/bsmg    (13054):   at elhl.run(PG:17)
+04-04 19:16:10.381 E/bsmg    (13054):   at cpdz.run(PG:5)
+04-04 19:16:10.381 E/bsmg    (13054):   at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+04-04 19:16:10.381 E/bsmg    (13054):   at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+04-04 19:16:10.381 E/bsmg    (13054):   at cpdf.run(PG:33)
+04-04 19:16:10.381 E/bsmg    (13054):   at java.lang.Thread.run(Thread.java:919)
+04-04 19:16:10.381 E/bsmg    (13054):   at cpfd.run(PG:63)
+04-04 19:16:10.381 E/bsmg    (13054): Caused by: flkb: Parent job is Cancelling; job=fljc{Cancelling}@d26a123
+04-04 19:16:10.381 E/bsmg    (13054): Caused by: java.lang.IllegalStateException: Cannot get auth token for account id: AccountId{id=1}
+04-04 19:16:10.381 E/bsmg    (13054):   at ekus.apply(PG:34)
+04-04 19:16:10.381 E/bsmg    (13054):   at elhj.apply(PG:17)
+04-04 19:16:10.381 E/bsmg    (13054):   at eumj.c(PG:3)
+04-04 19:16:10.381 E/bsmg    (13054):   at euml.run(PG:47)
+04-04 19:16:10.381 E/bsmg    (13054):   at cpdz.run(PG:5)
+04-04 19:16:10.381 E/bsmg    (13054):   at etkc.run(PG:46)
+04-04 19:16:10.381 E/bsmg    (13054):   at cpdl.run(PG:81)
+04-04 19:16:10.381 E/bsmg    (13054):   at java.lang.Thread.run(Thread.java:919)
+04-04 19:16:10.381 E/bsmg    (13054):   at cpfd.run(PG:63)
+04-04 19:16:10.386 E/dvcc    (13054): (REDACTED) Synclet run failed: %s
+04-04 19:16:10.386 E/dvcc    (13054): java.util.concurrent.ExecutionException: java.lang.IllegalStateException: Cannot get auth token for account id: AccountId{id=1}
+04-04 19:16:10.386 E/dvcc    (13054):   at eume.g(PG:21)
+04-04 19:16:10.386 E/dvcc    (13054):   at eumf.q(PG:24)
+04-04 19:16:10.386 E/dvcc    (13054):   at eume.get(PG:1)
+04-04 19:16:10.386 E/dvcc    (13054):   at a.dR(PG:2)
+04-04 19:16:10.386 E/dvcc    (13054):   at euqm.o(PG:10)
+04-04 19:16:10.386 E/dvcc    (13054):   at dvcb.a(PG:7)
+04-04 19:16:10.386 E/dvcc    (13054):   at ejmu.a(PG:3)
+04-04 19:16:10.386 E/dvcc    (13054):   at euqi.a(PG:3)
+04-04 19:16:10.386 E/dvcc    (13054):   at eupm.run(PG:19)
+04-04 19:16:10.386 E/dvcc    (13054):   at euqk.run(PG:5)
+04-04 19:16:10.386 E/dvcc    (13054):   at cpdz.run(PG:5)
+04-04 19:16:10.386 E/dvcc    (13054):   at etkc.run(PG:46)
+04-04 19:16:10.386 E/dvcc    (13054):   at cpdl.run(PG:81)
+04-04 19:16:10.386 E/dvcc    (13054):   at java.lang.Thread.run(Thread.java:919)
+04-04 19:16:10.386 E/dvcc    (13054):   at cpfd.run(PG:63)
+04-04 19:16:10.386 E/dvcc    (13054): Caused by: java.lang.IllegalStateException: Cannot get auth token for account id: AccountId{id=1}
+04-04 19:16:10.386 E/dvcc    (13054):   at ekus.apply(PG:34)
+04-04 19:16:10.386 E/dvcc    (13054):   at elhj.apply(PG:17)
+04-04 19:16:10.386 E/dvcc    (13054):   at eumj.c(PG:3)
+04-04 19:16:10.386 E/dvcc    (13054):   at euml.run(PG:47)
+04-04 19:16:10.386 E/dvcc    (13054):   ... 5 more
+04-04 19:16:10.449 E/.android.video(13272): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:16:10.450 E/ejme    (13054): (REDACTED) Synclet sync() failed for synckey: %s
+04-04 19:16:10.450 E/ejme    (13054): java.lang.IllegalStateException: Cannot get auth token for account id: AccountId{id=1}
+04-04 19:16:10.450 E/ejme    (13054):   at ekus.apply(PG:34)
+04-04 19:16:10.450 E/ejme    (13054):   at elhj.apply(PG:17)
+04-04 19:16:10.450 E/ejme    (13054):   at eumj.c(PG:3)
+04-04 19:16:10.450 E/ejme    (13054):   at euml.run(PG:47)
+04-04 19:16:10.450 E/ejme    (13054):   at cpdz.run(PG:5)
+04-04 19:16:10.450 E/ejme    (13054):   at etkc.run(PG:46)
+04-04 19:16:10.450 E/ejme    (13054):   at cpdl.run(PG:81)
+04-04 19:16:10.450 E/ejme    (13054):   at java.lang.Thread.run(Thread.java:919)
+04-04 19:16:10.450 E/ejme    (13054):   at cpfd.run(PG:63)
+04-04 19:16:10.577 E/YouTubeMusic(13035): Trying to detachMediaView when it wasn't the most recent MediaView Setter
+04-04 19:16:10.948 E/SQLiteLog(13272): (5) statement aborts at 1: [PRAGMA journal_mode=TRUNCATE] database is locked
+04-04 19:16:11.882 E/PlayMovies(13272): ocg.a:83 No worker key associated with this task with tags: [google_tv_widget_tag, com.google.android.apps.googletv.app.services.workmanager.WorkerWrapper]
+04-04 19:16:11.882 E/PlayMovies(13272):
+04-04 19:16:12.479 E/icing   ( 1834): icing-flash-bitmap.cc:101: Flash bitmap /data/user/0/com.google.android.gms/files/appsearch/icing/index_dir/idx/lite.lexicon.prop.2 is dirty
+04-04 19:16:12.479 E/icing   ( 1834): icing-dynamic-trie.cc:1313: Init of /data/user/0/com.google.android.gms/files/appsearch/icing/index_dir/idx/lite.lexicon.prop.2 failed
+04-04 19:16:12.479 E/icing   ( 1834): icing-dynamic-trie.cc:1367: Open prop bitmap failed: /data/user/0/com.google.android.gms/files/appsearch/icing/index_dir/idx/lite.lexicon.prop.2
+04-04 19:16:12.955 E/e.process.gapp(13421): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:16:13.053 E/FirebaseMessaging(13054): Default FirebaseApp has not been initialized. Skip logging event to GA.
+04-04 19:16:14.198 E/.android.chrom(13472): Not starting debugger since process cannot load the jdwp agent.
+04-04 19:16:14.547 E/libc    (13472): Access denied finding property "ro.vendor.api_level"
+04-04 19:16:14.942 E/ejme    (12125): (REDACTED) Failed to share %s data to AiAi.
+04-04 19:16:14.942 E/ejme    (12125): crms: Geller AiAi data share is not enabled
+04-04 19:16:14.942 E/ejme    (12125):   at vpa.c(PG:28)
+04-04 19:16:14.942 E/ejme    (12125):   at vpa.b(PG:1)
+04-04 19:16:14.942 E/ejme    (12125):   at vpf.a(PG:29)
+04-04 19:16:14.942 E/ejme    (12125):   at elhi.a(PG:17)
+04-04 19:16:14.942 E/ejme    (12125):   at eunw.a(PG:3)
+04-04 19:16:14.942 E/ejme    (12125):   at eupm.run(PG:19)
+04-04 19:16:14.942 E/ejme    (12125):   at cpdz.run(PG:5)
+04-04 19:16:14.942 E/ejme    (12125):   at etkc.run(PG:46)
+04-04 19:16:14.942 E/ejme    (12125):   at cpdl.run(PG:81)
+04-04 19:16:14.942 E/ejme    (12125):   at java.lang.Thread.run(Thread.java:919)
+04-04 19:16:14.942 E/ejme    (12125):   at cpfd.run(PG:63)
+04-04 19:16:16.606 E/bwky    (11366): RuntimeException while executing runnable anft@699cdc8 with executor MoreExecutors.directExecutor()
+04-04 19:16:16.606 E/bwky    (11366): java.util.concurrent.CancellationException: Task was cancelled.
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.h(PG:33)
+04-04 19:16:16.606 E/bwky    (11366):   at bwlg.s(PG:24)
+04-04 19:16:16.606 E/bwky    (11366):   at anft.run(PG:161)
+04-04 19:16:16.606 E/bwky    (11366):   at bwml.execute(PG:1)
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.f(PG:1)
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.k(PG:95)
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.cancel(PG:51)
+04-04 19:16:16.606 E/bwky    (11366):   at bwln.v(PG:11)
+04-04 19:16:16.606 E/bwky    (11366):   at bwll.run(PG:7)
+04-04 19:16:16.606 E/bwky    (11366):   at bwml.execute(PG:1)
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.f(PG:1)
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.k(PG:95)
+04-04 19:16:16.606 E/bwky    (11366):   at bwky.q(PG:29)
+04-04 19:16:16.606 E/bwky    (11366):   at bwli.e(PG:3)
+04-04 19:16:16.606 E/bwky    (11366):   at bwlk.run(PG:53)
+04-04 19:16:16.606 E/bwky    (11366):   at bpsg.call(PG:3)
+04-04 19:16:16.606 E/bwky    (11366):   at bpsd.call(PG:3)
+04-04 19:16:16.606 E/bwky    (11366):   at bpsw.call(PG:9)
+04-04 19:16:16.606 E/bwky    (11366):   at bpsm.run(PG:55)
+04-04 19:16:16.606 E/bwky    (11366):   at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1167)
+04-04 19:16:16.606 E/bwky    (11366):   at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:641)
+04-04 19:16:16.606 E/bwky    (11366):   at java.lang.Thread.run(Thread.java:919)
+04-04 19:16:16.606 E/bwky    (11366):   at bprw.run(PG:6)
+04-04 19:16:18.946 E/elgs    (12125): (REDACTED) Trace %s timed out after %d ms. Complete trace: %s
+04-04 19:16:18.946 E/elgs    (12125): elic:
+04-04 19:16:18.946 E/elgs    (12125):   at tk_trace.TimedProcessReaper#scheduleReap()(Started After:0)
+04-04 19:18:39.557 E/BatteryExternalStatsWorker(  841): no controller energy info supplied for bluetooth
+04-04 19:19:27.408 E/WifiNetworkMonitor(  841): Not any Obervers!!!
+04-04 19:21:09.617 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:10.617 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:11.619 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:12.619 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:13.621 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:14.622 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:15.622 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:16.623 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:17.625 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:18.072 E/PlayCommon(13272): [847] wcv.f: Failed to connect to server for server timestamp: java.net.UnknownHostException: Unable to resolve host "play.googleapis.com": No address associated with hostname
+04-04 19:21:18.074 E/PlayCommon(13272): [848] wcv.f: Failed to connect to server for server timestamp: java.net.UnknownHostException: Unable to resolve host "play.googleapis.com": No address associated with hostname
+04-04 19:21:18.115 E/PlayCommon(13272): [848] wcv.f: Failed to connect to server for log upload.
+04-04 19:21:18.135 E/PlayCommon(13272): [847] wcv.f: Failed to connect to server for log upload.
+04-04 19:21:18.625 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:19.627 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:20.629 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:21.631 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:22.121 E/WifiNetworkMonitor(  841): Not any Obervers!!!
+04-04 19:21:22.632 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:23.634 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:24.635 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:25.637 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:26.637 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:27.639 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:28.163 E/WifiNetworkMonitor(  841): Not any Obervers!!!
+04-04 19:21:28.640 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:29.641 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:30.641 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:31.643 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:32.645 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:33.646 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:34.648 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:35.648 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:36.649 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:37.651 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:38.652 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:39.653 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:40.654 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:41.655 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:42.655 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:43.657 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:44.658 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:45.660 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:46.662 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:47.663 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:48.664 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:49.665 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:50.666 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:51.667 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:52.670 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:53.671 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:54.671 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:55.673 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:56.673 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:57.676 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:58.676 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:21:59.679 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:00.680 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:01.680 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:02.682 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:03.684 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:04.685 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:05.688 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:06.690 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:07.691 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:08.692 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:09.693 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:10.693 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:11.695 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:12.696 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:13.455 E/WifiNetworkMonitor(  841): Not any Obervers!!!
+04-04 19:22:13.698 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:14.699 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:15.699 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:16.701 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:17.702 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:18.703 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:19.704 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:20.704 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:21.705 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:22.708 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:23.709 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:24.711 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:25.713 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:26.714 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:27.715 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:28.715 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:29.717 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:30.718 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:31.719 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:32.720 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:33.721 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:34.722 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:35.723 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:36.725 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:37.725 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:38.727 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:39.728 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:40.729 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:41.731 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:42.733 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:43.733 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:44.736 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:45.737 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:46.737 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:47.739 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:48.740 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:49.741 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:50.742 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:51.743 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:52.745 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:53.747 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:54.749 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:55.749 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:56.751 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:57.752 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:58.753 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:22:59.753 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:23:00.755 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:23:01.756 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:23:02.756 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:23:03.759 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:23:04.760 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+04-04 19:23:05.761 E/SPRDHWComposer(  436): SPRD_SR SprdHWComposer2::GET_ACTIVE_CONFIG[466] *outConfig:0
+^C
+c:\unbinding\hobby\adb\platform-tools>
