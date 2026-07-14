@@ -41,6 +41,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final List<String> _logs = [];
   final List<String> _tunnelLogs = [];
+
+  final List<String> _pendingLogLines = [];
+  Timer? _logFlushTimer;
+  static const int _maxLogLines = 1000;
+
   final TextEditingController _commandController = TextEditingController();
 
   final ScrollController _outerScrollController = ScrollController();
@@ -116,12 +121,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
 
       _tunnel.output.listen((line) {
-        if (mounted) {
-          setState(() {
-            _logs.add(line);
-            _tunnelLogs.add(line);
-          });
-        }
+        if (mounted) _appendLog(line, tunnel: true);
       });
 
       _drive.status.listen((msg) {
@@ -294,6 +294,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       }
     } catch (_) {}
+  }
+  void _appendLog(String line, {bool tunnel = false}) {
+    _pendingLogLines.add(line);
+    if (tunnel) _tunnelLogs.add(line);
+    _logFlushTimer ??= Timer(const Duration(milliseconds: 120), () {
+      _logFlushTimer = null;
+      if (!mounted) return;
+      setState(() {
+        _logs.addAll(_pendingLogLines);
+        _pendingLogLines.clear();
+        if (_logs.length > _maxLogLines) {
+          _logs.removeRange(0, _logs.length - _maxLogLines);
+        }
+      });
+      _scrollConsoleToBottom();
+    });
   }
 
   // ─── Server control ────────────────────────────────────────
