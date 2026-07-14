@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/server_model.dart';
 import '../../services/java_downloader.dart';
+import '../../services/platform_service.dart';
 
 class PluginManagerScreen extends StatefulWidget {
   final ServerModel server;
@@ -59,37 +60,42 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
     super.dispose();
   }
 
-  // ─── Scanning ─────────────────────────────────────
+  // ─── Scanning (now uses Dart Directory API, works everywhere) ─
   Future<void> _scanMods() async {
     if (!_showModsTab) return;
-    final result = await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'ls "${widget.server.path}/$_modFolder"/*.jar 2>/dev/null',
-    ]);
-    if (result.exitCode == 0) {
-      final files = result.stdout
-          .toString()
-          .trim()
-          .split('\n')
-          .where((f) => f.isNotEmpty)
+    try {
+      final dir = Directory(
+          '${widget.server.path}/$_modFolder');
+      if (!await dir.exists()) {
+        if (mounted) setState(() => _mods = []);
+        return;
+      }
+      final files = await dir
+          .list()
+          .where((e) => e is File && e.path.endsWith('.jar'))
+          .map((e) => e.path)
           .toList();
       if (mounted) setState(() => _mods = files);
+    } catch (_) {
+      if (mounted) setState(() => _mods = []);
     }
   }
 
   Future<void> _scanDatapacks() async {
-    final result = await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'ls "${widget.server.path}/world/datapacks/" 2>/dev/null',
-    ]);
-    if (result.exitCode == 0) {
-      final files = result.stdout
-          .toString()
-          .trim()
-          .split('\n')
-          .where((f) => f.isNotEmpty)
+    try {
+      final dir = Directory(
+          '${widget.server.path}/world/datapacks');
+      if (!await dir.exists()) {
+        if (mounted) setState(() => _datapacks = []);
+        return;
+      }
+      final files = await dir
+          .list()
+          .map((e) => e.path.split('/').last)
           .toList();
       if (mounted) setState(() => _datapacks = files);
+    } catch (_) {
+      if (mounted) setState(() => _datapacks = []);
     }
   }
 
@@ -109,22 +115,11 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
         _downloading = true;
       });
 
-      await Process.run('wsl.exe', [
-        '-e', 'bash', '-c',
-        'mkdir -p "${widget.server.path}/$_modFolder"',
-      ]);
-
-      final wslPath = file.path!
-          .replaceAll('\\', '/')
-          .replaceFirstMapped(
-              RegExp(r'^([A-Za-z]):'),
-              (m) =>
-                  '/mnt/${m.group(1)!.toLowerCase()}');
-
-      await Process.run('wsl.exe', [
-        '-e', 'bash', '-c',
-        'cp "$wslPath" "${widget.server.path}/$_modFolder/${file.name}"',
-      ]);
+      final destDir = Directory(
+          '${widget.server.path}/$_modFolder');
+      await destDir.create(recursive: true);
+      await File(file.path!).copy(
+          '${destDir.path}/${file.name}');
     }
 
     setState(() {
@@ -155,15 +150,18 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
       _downloadStatus = 'Downloading $fileName...';
     });
 
-    await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'mkdir -p "${widget.server.path}/$_modFolder"',
-    ]);
+    final destDir = Directory(
+        '${widget.server.path}/$_modFolder');
+    await destDir.create(recursive: true);
+    final destPath = '${destDir.path}/$fileName';
 
-    final result = await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'wget -q -O "${widget.server.path}/$_modFolder/$fileName" "$url"',
-    ]);
+    final ok = await PlatformService.downloadFile(
+      url: url,
+      destPath: destPath,
+      onStatus: (s) {
+        if (mounted) setState(() => _downloadStatus = s);
+      },
+    );
 
     setState(() {
       _downloading = false;
@@ -171,11 +169,10 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
     });
 
     if (mounted) {
-      if (result.exitCode == 0) {
+      if (ok) {
         _modUrlController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('$fileName downloaded!')),
+          SnackBar(content: Text('$fileName downloaded!')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -192,8 +189,9 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
     final confirmed = await _confirmDelete(
         path.split('/').last);
     if (!confirmed) return;
-    await Process.run(
-        'wsl.exe', ['-e', 'rm', '-f', path]);
+    try {
+      await File(path).delete();
+    } catch (_) {}
     await _scanMods();
   }
 
@@ -213,22 +211,11 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
         _downloading = true;
       });
 
-      await Process.run('wsl.exe', [
-        '-e', 'bash', '-c',
-        'mkdir -p "${widget.server.path}/world/datapacks"',
-      ]);
-
-      final wslPath = file.path!
-          .replaceAll('\\', '/')
-          .replaceFirstMapped(
-              RegExp(r'^([A-Za-z]):'),
-              (m) =>
-                  '/mnt/${m.group(1)!.toLowerCase()}');
-
-      await Process.run('wsl.exe', [
-        '-e', 'bash', '-c',
-        'cp "$wslPath" "${widget.server.path}/world/datapacks/${file.name}"',
-      ]);
+      final destDir = Directory(
+          '${widget.server.path}/world/datapacks');
+      await destDir.create(recursive: true);
+      await File(file.path!).copy(
+          '${destDir.path}/${file.name}');
     }
 
     setState(() {
@@ -260,15 +247,18 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
       _downloadStatus = 'Downloading $fileName...';
     });
 
-    await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'mkdir -p "${widget.server.path}/world/datapacks"',
-    ]);
+    final destDir = Directory(
+        '${widget.server.path}/world/datapacks');
+    await destDir.create(recursive: true);
+    final destPath = '${destDir.path}/$fileName';
 
-    final result = await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'wget -q -O "${widget.server.path}/world/datapacks/$fileName" "$url"',
-    ]);
+    final ok = await PlatformService.downloadFile(
+      url: url,
+      destPath: destPath,
+      onStatus: (s) {
+        if (mounted) setState(() => _downloadStatus = s);
+      },
+    );
 
     setState(() {
       _downloading = false;
@@ -276,7 +266,7 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
     });
 
     if (mounted) {
-      if (result.exitCode == 0) {
+      if (ok) {
         _datapackUrlController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -296,24 +286,24 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
   Future<void> _deleteDatapack(String name) async {
     final confirmed = await _confirmDelete(name);
     if (!confirmed) return;
-    await Process.run('wsl.exe', [
-      '-e', 'bash', '-c',
-      'rm -rf "${widget.server.path}/world/datapacks/$name"',
-    ]);
+    try {
+      await File(
+          '${widget.server.path}/world/datapacks/$name')
+          .delete();
+    } catch (_) {}
     await _scanDatapacks();
   }
 
-  // ─── Shared helpers ───────────────────────────────
   Future<bool> _confirmDelete(String name) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A1A),
-        title: Text('Delete $name?'),
-        content: const Text(
-          'This will permanently remove the file.',
-          style:
-              TextStyle(fontSize: 13, color: Colors.grey),
+        title: Text('Delete "$name"?'),
+        content: Text(
+          'This cannot be undone.',
+          style: const TextStyle(
+              fontSize: 13, color: Colors.grey),
         ),
         actions: [
           TextButton(
@@ -367,8 +357,7 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
           tabs: [
             if (_showModsTab)
               Tab(
-                icon: const Icon(Icons.extension,
-                    size: 18),
+                icon: const Icon(Icons.extension, size: 18),
                 text: '${_modLabel}s',
               ),
             const Tab(
@@ -381,8 +370,7 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          if (_showModsTab)
-            _buildModsTab(),
+          if (_showModsTab) _buildModsTab(),
           _buildDatapacksTab(),
         ],
       ),
@@ -395,7 +383,8 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
       children: [
         _addSection(
           urlController: _modUrlController,
-          urlHint: 'Paste ${_modLabel.toLowerCase()} download URL (.jar)',
+          urlHint:
+              'Paste ${_modLabel.toLowerCase()} download URL (.jar)',
           onAddUrl: _addModFromUrl,
           onBrowse: _addModFromFile,
           folderPath:
@@ -407,12 +396,10 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
         Expanded(
           child: _mods.isEmpty
               ? _emptyState(
-                  '${_modLabel}s',
-                  Icons.extension_off)
+                  '${_modLabel}s', Icons.extension_off)
               : _fileList(
                   files: _mods,
-                  nameExtractor: (p) =>
-                      p.split('/').last,
+                  nameExtractor: (p) => p.split('/').last,
                   onDelete: _deleteMod,
                   icon: Icons.extension,
                 ),
@@ -441,12 +428,12 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
           color: const Color(0xFF111111),
           padding: const EdgeInsets.symmetric(
               horizontal: 16, vertical: 6),
-          child: Row(
+          child: const Row(
             children: [
-              const Icon(Icons.info_outline,
+              Icon(Icons.info_outline,
                   size: 12, color: Colors.grey),
-              const SizedBox(width: 6),
-              const Expanded(
+              SizedBox(width: 6),
+              Expanded(
                 child: Text(
                   'Datapacks are loaded automatically when the server starts.',
                   style: TextStyle(
@@ -458,8 +445,7 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
         ),
         Expanded(
           child: _datapacks.isEmpty
-              ? _emptyState(
-                  'Datapacks', Icons.folder_zip)
+              ? _emptyState('Datapacks', Icons.folder_zip)
               : _fileList(
                   files: _datapacks,
                   nameExtractor: (n) => n,
@@ -499,20 +485,18 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
                     filled: true,
                     fillColor: const Color(0xFF0D0D0D),
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
                     ),
-                    prefixIcon: const Icon(Icons.link,
-                        size: 18),
+                    prefixIcon:
+                        const Icon(Icons.link, size: 18),
                     isDense: true,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               FilledButton.icon(
-                onPressed:
-                    downloading ? null : onAddUrl,
+                onPressed: downloading ? null : onAddUrl,
                 icon: downloading
                     ? const SizedBox(
                         width: 14,
@@ -522,12 +506,10 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
                           color: Colors.black,
                         ),
                       )
-                    : const Icon(Icons.download,
-                        size: 16),
+                    : const Icon(Icons.download, size: 16),
                 label: const Text('Download'),
                 style: FilledButton.styleFrom(
-                  backgroundColor:
-                      const Color(0xFF00C853),
+                  backgroundColor: const Color(0xFF00C853),
                   foregroundColor: Colors.black,
                 ),
               ),
@@ -538,25 +520,21 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: downloading ? null : onBrowse,
-              icon: const Icon(Icons.folder_open,
-                  size: 16),
+              icon: const Icon(Icons.folder_open, size: 16),
               label: const Text('Browse files'),
               style: OutlinedButton.styleFrom(
-                foregroundColor:
-                    const Color(0xFF00C853),
+                foregroundColor: const Color(0xFF00C853),
                 side: const BorderSide(
                     color: Color(0xFF00C853)),
-                padding: const EdgeInsets.symmetric(
-                    vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
           ),
-          if (downloading &&
-              downloadStatus.isNotEmpty) ...[
+          if (downloading && downloadStatus.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(
               children: [
@@ -609,7 +587,7 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
   Widget _fileList({
     required List<String> files,
     required String Function(String) nameExtractor,
-    required Function(String) onDelete,
+    required Future<void> Function(String) onDelete,
     required IconData icon,
   }) {
     return ListView.builder(
@@ -620,41 +598,35 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
         final name = nameExtractor(file);
         return Container(
           margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: const Color(0xFF1A1A1A),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white10),
+            border:
+                Border.all(color: Colors.white10),
           ),
-          child: ListTile(
-            leading: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0xFF00C853)
-                    .withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
+          child: Row(
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: const Color(0xFF00C853)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              child: Icon(icon,
-                  color: const Color(0xFF00C853),
-                  size: 18),
-            ),
-            title: Text(name,
-                style: const TextStyle(fontSize: 13)),
-            subtitle: Text(
-              file,
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.grey,
-                fontFamily: 'monospace',
+              IconButton(
+                icon: const Icon(Icons.delete_outline,
+                    size: 18, color: Colors.red),
+                onPressed: () => onDelete(file),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline,
-                  size: 18, color: Colors.red),
-              onPressed: () => onDelete(file),
-            ),
+            ],
           ),
         );
       },
@@ -666,18 +638,12 @@ class _PluginManagerScreenState extends State<PluginManagerScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 48, color: Colors.grey[700]),
+          Icon(icon, size: 48, color: Colors.grey[800]),
           const SizedBox(height: 12),
           Text(
-            'No $label installed',
+            'No $label yet',
             style: const TextStyle(
-                color: Colors.grey, fontSize: 14),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Add files using the options above',
-            style: TextStyle(
-                color: Colors.grey[700], fontSize: 12),
+                color: Colors.grey, fontSize: 13),
           ),
         ],
       ),

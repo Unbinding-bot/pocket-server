@@ -13,8 +13,7 @@ class TermuxEnvService {
   // The "prefix" is where our Termux env lives
   static Future<String> getPrefix() async {
     if (_prefix != null) return _prefix!;
-    final base =
-        await PlatformService.getAppFilesPath();
+    final base = await PlatformService.getAppFilesPath();
     _prefix = p.join(base, 'termux');
     return _prefix!;
   }
@@ -25,8 +24,7 @@ class TermuxEnvService {
 
   static Future<String> getJavaHome() async {
     return p.join(
-        await getPrefix(), 'usr', 'lib', 'jvm',
-        'java-17-openjdk');
+        await getPrefix(), 'usr', 'lib', 'jvm', 'java-17-openjdk');
   }
 
   static Future<bool> isInstalled() async {
@@ -39,7 +37,6 @@ class TermuxEnvService {
   static Future<bool> isJavaInstalled() async {
     if (!Platform.isAndroid) return true;
     final javaHome = await getJavaHome();
-    // Try common Termux java locations
     final locations = [
       p.join(javaHome, 'bin', 'java'),
       p.join(await getPrefix(), 'usr', 'bin', 'java'),
@@ -72,13 +69,9 @@ class TermuxEnvService {
     final usr = p.join(prefix, 'usr');
     final lib = p.join(usr, 'lib');
 
-    // Find actual java binary
     String actualJavaHome = javaHome;
-    if (!File(p.join(javaHome, 'bin', 'java'))
-        .existsSync()) {
-      // Try to find java in usr/bin
-      final javaLink =
-          File(p.join(usr, 'bin', 'java'));
+    if (!File(p.join(javaHome, 'bin', 'java')).existsSync()) {
+      final javaLink = File(p.join(usr, 'bin', 'java'));
       if (javaLink.existsSync()) {
         actualJavaHome = usr;
       }
@@ -92,8 +85,7 @@ class TermuxEnvService {
   }
 
   // Run a command in our Termux environment
-  static Future<ProcessResult> runCommand(
-      String command) async {
+  static Future<ProcessResult> runCommand(String command) async {
     if (!Platform.isAndroid) {
       return PlatformService.runCommand(command);
     }
@@ -122,8 +114,7 @@ class TermuxEnvService {
         'destDir': p.join(prefix, 'usr'),
       });
     } catch (e) {
-      // Bootstrap zip extracts to different structure
-      // Try extracting to prefix directly
+      // Bootstrap zip extracts to different structure — try prefix directly
       await _channel.invokeMethod('extractBootstrap', {
         'destDir': prefix,
       });
@@ -131,16 +122,13 @@ class TermuxEnvService {
 
     onProgress('Setting up directories...', 0.3);
 
-    // Create essential dirs
     for (final dir in [
-      'tmp', 'home', 'usr/bin', 'usr/lib',
-      'usr/lib/jvm',
+      'tmp', 'home', 'usr/bin', 'usr/lib', 'usr/lib/jvm',
     ]) {
-      await Directory(p.join(prefix, dir))
-          .create(recursive: true);
+      await Directory(p.join(prefix, dir)).create(recursive: true);
     }
 
-    // Make binaries executable
+    // Make bootstrap binaries executable (uses env so PATH includes bootstrap bin)
     await _channel.invokeMethod('runCommand', {
       'cmd': 'chmod -R 755 ${p.join(prefix, 'usr', 'bin')} 2>/dev/null || true',
       'env': await getEnv(),
@@ -148,31 +136,30 @@ class TermuxEnvService {
 
     onProgress('Installing Java 17...', 0.4);
 
-    // Step 2: Extract the OpenJDK deb
-    // First copy it out of assets
     final tempDir = p.join(prefix, 'tmp');
     await Directory(tempDir).create(recursive: true);
 
+    // FIX 1: Correct asset filename (was 'openjdk-17.deb', file is actually named
+    //         'openjdk-17_17.0.18_aarch64.deb').
+    // FIX 2: Pass env so bootstrap's ar/tar binaries are on PATH when extracting
+    //         the .deb (ar is not in /system/bin — it lives in the bootstrap usr/bin).
     try {
       await _channel.invokeMethod('extractDeb', {
-        'asset': 'tools/android/openjdk-17.deb',
+        'asset': 'tools/android/openjdk-17_17.0.18_aarch64.deb',
         'destDir': p.join(prefix, 'usr'),
+        'env': await getEnv(),
       });
       onProgress('Java 17 installed!', 0.8);
     } catch (e) {
       onProgress('Deb extraction failed: $e — trying fallback...', 0.5);
-      // Fallback: download Java directly
-      final ok = await _downloadJavaFallback(
-          prefix, onProgress);
+      final ok = await _downloadJavaFallback(prefix, onProgress);
       if (!ok) return false;
     }
 
     // Fix permissions on java binaries
     onProgress('Fixing permissions...', 0.9);
-    final javaBin =
-        p.join(prefix, 'usr', 'bin', 'java');
-    final javaLibDir =
-        p.join(prefix, 'usr', 'lib', 'jvm');
+    final javaBin = p.join(prefix, 'usr', 'bin', 'java');
+    final javaLibDir = p.join(prefix, 'usr', 'lib', 'jvm');
 
     await _channel.invokeMethod('runCommand', {
       'cmd': 'chmod -R 755 "$javaLibDir" 2>/dev/null; '
@@ -183,12 +170,10 @@ class TermuxEnvService {
 
     // Verify java works
     onProgress('Verifying Java...', 0.95);
-    final verify = await _channel
-        .invokeMethod<String>('runCommand', {
+    final verify = await _channel.invokeMethod<String>('runCommand', {
       'cmd': 'java -version 2>&1 || '
-          '${p.join(prefix, 'usr', 'bin', 'java')} '
-          '-version 2>&1',
-      'env': await (getJavaEnv()),
+          '${p.join(prefix, 'usr', 'bin', 'java')} -version 2>&1',
+      'env': await getJavaEnv(),
     });
     print('Java verify: $verify');
 
@@ -197,9 +182,7 @@ class TermuxEnvService {
   }
 
   static Future<bool> _downloadJavaFallback(
-      String prefix,
-      Function(String, double) onProgress) async {
-    // Download Termux's Java package directly
+      String prefix, Function(String, double) onProgress) async {
     const url =
         'https://packages.termux.dev/apt/termux-main/'
         'pool/main/o/openjdk-17/'
@@ -207,8 +190,7 @@ class TermuxEnvService {
 
     onProgress('Downloading Java 17...', 0.5);
 
-    final tempDeb =
-        p.join(prefix, 'tmp', 'openjdk-17.deb');
+    final tempDeb = p.join(prefix, 'tmp', 'openjdk-17.deb');
 
     final ok = await PlatformService.downloadFile(
       url: url,
@@ -219,20 +201,30 @@ class TermuxEnvService {
     if (!ok) return false;
 
     onProgress('Extracting Java...', 0.75);
-    await _channel.invokeMethod('extractDeb', {
-      'asset': '',
-      'destDir': p.join(prefix, 'usr'),
-    });
 
-    return true;
+    // FIX 3: Was calling extractDeb with 'asset': '' (broken — Kotlin's copyAsset
+    //         would fail on an empty path). Now uses extractDebFromPath which takes
+    //         the already-downloaded file path directly.
+    try {
+      await _channel.invokeMethod('extractDebFromPath', {
+        'debPath': tempDeb,
+        'destDir': p.join(prefix, 'usr'),
+        'env': await getEnv(),
+      });
+      // Clean up temp deb
+      try { await File(tempDeb).delete(); } catch (_) {}
+      return true;
+    } catch (e) {
+      onProgress('Extraction failed: $e', 0.75);
+      return false;
+    }
   }
 
   static Future<bool> isJava21Installed() async {
     if (!Platform.isAndroid) return true;
     final prefix = await getPrefix();
     final locations = [
-      p.join(prefix, 'usr', 'lib', 'jvm',
-          'java-21-openjdk', 'bin', 'java'),
+      p.join(prefix, 'usr', 'lib', 'jvm', 'java-21-openjdk', 'bin', 'java'),
       p.join(prefix, 'usr', 'bin', 'java21'),
     ];
     return locations.any((f) => File(f).existsSync());
@@ -240,43 +232,60 @@ class TermuxEnvService {
 
   static Future<String> getJava21Home() async {
     final prefix = await getPrefix();
-    return p.join(
-        prefix, 'usr', 'lib', 'jvm',
-        'java-21-openjdk');
+    return p.join(prefix, 'usr', 'lib', 'jvm', 'java-21-openjdk');
   }
 
-  //java8 shit
   static Future<String> getJava8Home() async {
     final prefix = await getPrefix();
-    return p.join(
-        prefix, 'usr', 'lib', 'jvm',
-        'java-8-openjdk');
+    return p.join(prefix, 'usr', 'lib', 'jvm', 'java-8-openjdk');
   }
 
   static Future<bool> isJava8Installed() async {
     if (!Platform.isAndroid) return true;
     final javaHome = await getJava8Home();
-    return File(p.join(javaHome, 'bin', 'java'))
-        .existsSync();
+    return File(p.join(javaHome, 'bin', 'java')).existsSync();
   }
 
-  static Future<bool> ensureJava8(
-      Function(String) onStatus) async {
+  static Future<bool> ensureJava8(Function(String) onStatus) async {
     if (await isJava8Installed()) return true;
 
     onStatus('Installing Java 8...');
     final prefix = await getPrefix();
 
+    // NOTE: openjdk-8.deb is NOT currently bundled in assets/tools/android/.
+    // Only openjdk-17_17.0.18_aarch64.deb and openjdk-21.deb are bundled.
+    // If you want to support MC < 1.17 on Android, you need to either:
+    //   a) Bundle openjdk-8.deb in assets/tools/android/ and add it to pubspec.yaml
+    //   b) Download it from Termux repos at runtime (url below)
+    // For now this falls back to a download.
+    const url =
+        'https://packages.termux.dev/apt/termux-main/'
+        'pool/main/o/openjdk-17/'  // substitute Java 8 URL when you have it
+        'openjdk-8_8u422b05_aarch64.deb';
+
+    final tempDeb = p.join(prefix, 'tmp', 'openjdk-8.deb');
+    final ok = await PlatformService.downloadFile(
+      url: url,
+      destPath: tempDeb,
+      onStatus: onStatus,
+    );
+
+    if (!ok) {
+      onStatus('Java 8 download failed');
+      return false;
+    }
+
     try {
-      await _channel.invokeMethod('extractDeb', {
-        'asset': 'tools/android/openjdk-8.deb',
+      await _channel.invokeMethod('extractDebFromPath', {
+        'debPath': tempDeb,
         'destDir': p.join(prefix, 'usr'),
+        'env': await getEnv(),
       });
+      try { await File(tempDeb).delete(); } catch (_) {}
 
       final javaHome = await getJava8Home();
       await _channel.invokeMethod('runCommand', {
-        'cmd':
-            'chmod -R 755 "$javaHome" 2>/dev/null; true',
+        'cmd': 'chmod -R 755 "$javaHome" 2>/dev/null; true',
         'env': await getEnv(),
       });
 
@@ -289,8 +298,7 @@ class TermuxEnvService {
   }
 
   // Get env for a specific java version
-  static Future<Map<String, String>> getJavaEnvForVersion(
-      int version) async {
+  static Future<Map<String, String>> getJavaEnvForVersion(int version) async {
     final env = await getEnv();
     final prefix = await getPrefix();
     final usr = p.join(prefix, 'usr');
@@ -313,8 +321,7 @@ class TermuxEnvService {
   }
 
   // Install Java 21 lazily
-  static Future<bool> ensureJava21(
-      Function(String) onStatus) async {
+  static Future<bool> ensureJava21(Function(String) onStatus) async {
     if (await isJava21Installed()) return true;
 
     onStatus('Installing Java 21...');
@@ -324,9 +331,9 @@ class TermuxEnvService {
       await _channel.invokeMethod('extractDeb', {
         'asset': 'tools/android/openjdk-21.deb',
         'destDir': p.join(prefix, 'usr'),
+        'env': await getEnv(),
       });
 
-      // Fix permissions
       final javaHome = await getJava21Home();
       await _channel.invokeMethod('runCommand', {
         'cmd': 'chmod -R 755 "$javaHome" 2>/dev/null; true',
@@ -351,16 +358,13 @@ class TermuxEnvService {
     final prefix = await getPrefix();
 
     // Ensure correct java is installed
-    if (javaVersion >= 21 &&
-        !await isJava21Installed()) {
+    if (javaVersion >= 21 && !await isJava21Installed()) {
       await ensureJava21((_) {});
-    } else if (javaVersion <= 8 &&
-        !await isJava8Installed()) {
+    } else if (javaVersion <= 8 && !await isJava8Installed()) {
       await ensureJava8((_) {});
     }
 
-    final env =
-        await getJavaEnvForVersion(javaVersion);
+    final env = await getJavaEnvForVersion(javaVersion);
 
     final java8Home  = await getJava8Home();
     final java17Home = await getJavaHome();
@@ -422,5 +426,4 @@ class ProcessBuilder {
       environment: env,
     );
   }
-  
 }
