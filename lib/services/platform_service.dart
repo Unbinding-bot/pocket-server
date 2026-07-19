@@ -187,9 +187,23 @@ class PlatformService {
       int received = 0;
       final sink = File(destPath).openWrite();
 
+      // Network chunks can arrive hundreds of times per second — only
+      // push a status update every ~150ms (plus always on the final
+      // chunk) instead of on every single chunk, or the UI listening
+      // to this ends up doing a rebuild per chunk during big downloads
+      // like the Java runtime.
+      DateTime lastEmit = DateTime.fromMillisecondsSinceEpoch(0);
+      const throttle = Duration(milliseconds: 150);
+
       await for (final chunk in response.stream) {
         sink.add(chunk);
         received += chunk.length;
+        final now = DateTime.now();
+        final isLast = total > 0 && received >= total;
+        if (now.difference(lastEmit) < throttle && !isLast) {
+          continue;
+        }
+        lastEmit = now;
         if (total > 0) {
           onStatus(
               'Downloading... '

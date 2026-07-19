@@ -48,8 +48,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   final TextEditingController _commandController = TextEditingController();
 
-  final ScrollController _outerScrollController = ScrollController();
-  
   final ScrollController _consoleScrollController = ScrollController();
   ServerStats _currentStats = const ServerStats();
 
@@ -99,12 +97,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       _server.output.listen((line) {
         if (mounted) {
-          setState(() => _logs.add(line));
           DebugLogger.log(line, tag: 'MC');
           _parseServerOutput(line);
-          _scrollConsoleToBottom();
-
           _consoleLog.write(line);
+          _appendLog(line);
         }
       });
 
@@ -140,9 +136,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
     void _setupConsoleScrollListener() {
-    _outerScrollController.addListener(() {
-      if (!_outerScrollController.hasClients) return;
-      final pos = _outerScrollController.position;
+    _consoleScrollController.addListener(() {
+      if (!_consoleScrollController.hasClients) return;
+      final pos = _consoleScrollController.position;
       final atBottom =
           pos.pixels >= pos.maxScrollExtent - 100;
       if (mounted) {
@@ -157,9 +153,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _scrollConsoleToBottom({bool force = false}) {
     if (!force && _userScrolledUp) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_outerScrollController.hasClients) {
-        _outerScrollController.animateTo(
-          _outerScrollController.position.maxScrollExtent,
+      if (_consoleScrollController.hasClients) {
+        _consoleScrollController.animateTo(
+          _consoleScrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOut,
         );
@@ -771,7 +767,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
   @override
   void dispose() {
-    _outerScrollController.dispose();
     _consoleScrollController.dispose(); 
     _server.dispose();
     _tunnel.dispose();
@@ -840,161 +835,176 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          return Stack( // Wrap in Stack to place the button over the scroll view
-            alignment: Alignment.bottomCenter,
-            children: [
-              CustomScrollView(
-                controller: _outerScrollController, // Use ONE controller for everything
-                slivers: [
-                  // 1. Stats Dashboard
-                  SliverToBoxAdapter(
-                    child: _buildStatsDashboard(constraints.maxWidth),
-                  ),
-                  
-                  // 2. Console Header
-                  SliverToBoxAdapter(
+          // ── Top panel: stats, RAM, everything that isn't the console ──
+          // No scroll wrapper and no fixed height — all stat cards should
+          // just be visible at once, and the console below adjusts to
+          // whatever space is left.
+          final statsPanel = _buildStatsDashboard(constraints.maxWidth);
+
+          // ── Console header (fixed, sits above the scrolling log list) ──
+          final consoleHeader = Container(
+            color: const Color(0xFF1A1A1A),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                const Icon(Icons.terminal, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                const Text('Console', style: TextStyle(fontSize: 13, color: Colors.grey)),
+                const Spacer(),
+                if (_activeServer != null)
+                  GestureDetector(
+                    onTap: _openLogFile,
                     child: Container(
-                      color: const Color(0xFF1A1A1A),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.terminal, size: 16, color: Colors.grey),
-                          const SizedBox(width: 8),
-                          const Text('Console', style: TextStyle(fontSize: 13, color: Colors.grey)),    
-                          const Spacer(),
-                          if (_activeServer != null)
-                            GestureDetector(
-                              onTap: _openLogFile,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.open_in_new, size: 12, color: Colors.grey),
-                                    SizedBox(width: 4),
-                                    Text('Open log', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // 3. The Console Content (now a SliverList for unified scrolling)
-                  // 3. Console content — part of outer scroll
-                  SliverPadding(
-                    padding: const EdgeInsets.all(12),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => ExcludeSemantics(
-                          child: GestureDetector(
-                            onLongPress: i == 0
-                                ? () {
-                                    if (_logs.isEmpty) return;
-                                    Clipboard.setData(ClipboardData(
-                                        text: _logs.join('\n')));
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(const SnackBar(
-                                      content: Text(
-                                          'Console copied to clipboard'),
-                                      duration: Duration(seconds: 2),
-                                    ));
-                                  }
-                                : null,
-                            child: Container(
-                              color: const Color(0xFF0D0D0D),
-                              child: SelectableText(
-                                _logs[i],
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 12,
-                                  color: Color(0xFF00C853),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        childCount: _logs.length,
-                      ),
-                    ),
-                  ),
-
-                  // 4. Command Input (at the very bottom of the scroll)
-                  SliverToBoxAdapter(
-                    child: Container(
-                      color: const Color(0xFF1A1A1A),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Row(
-                        children: [
-                          const Text('> ', style: TextStyle(color: Color(0xFF00C853), fontFamily: 'monospace', fontSize: 14)),
-                          Expanded(
-                            child: TextField(
-                              controller: _commandController,
-                              style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                              decoration: const InputDecoration(hintText: 'Enter server command...', border: InputBorder.none),
-                              onSubmitted: (_) => _sendCommand(),
-                            ),
-                          ),
-                          IconButton(icon: const Icon(Icons.send), onPressed: _sendCommand),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              
-              //4.67 umm yaah
-
-              Positioned(
-                bottom: 67,
-                right: 16,
-                child: FloatingActionButton.small(
-                  onPressed: () => _outerScrollController.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeOut),
-                  backgroundColor: const Color(0xFF1A1A1A),
-                  child: const Icon(Icons.keyboard_arrow_up, color: Colors.grey),
-                ),
-              ),
-
-              // 5. Centered Scroll to Bottom Button
-              if (_showScrollDown)
-                Positioned(
-                  bottom: 80, // Positioned above the command input
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _userScrolledUp = false;
-                        _showScrollDown = false;
-                      });
-                      _outerScrollController.animateTo(
-                        _outerScrollController.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 400),
-                        curve: Curves.easeOut,
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00C853),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4)],
+                        color: Colors.white.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.keyboard_arrow_down, color: Colors.black, size: 20),
+                          Icon(Icons.open_in_new, size: 12, color: Colors.grey),
                           SizedBox(width: 4),
-                          Text("Jump to Bottom", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                          Text('Open log', style: TextStyle(fontSize: 11, color: Colors.grey)),
                         ],
                       ),
                     ),
                   ),
+              ],
+            ),
+          );
+
+          // ── Scrolling log list — owns its own controller/scrollbar ──
+          final consoleList = Scrollbar(
+            controller: _consoleScrollController,
+            thumbVisibility: true,
+            child: ListView.builder(
+              controller: _consoleScrollController,
+              padding: const EdgeInsets.all(12),
+              itemCount: _logs.length,
+              itemBuilder: (_, i) => ExcludeSemantics(
+                child: GestureDetector(
+                  onLongPress: i == 0
+                      ? () {
+                          if (_logs.isEmpty) return;
+                          Clipboard.setData(ClipboardData(
+                              text: _logs.join('\n')));
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(const SnackBar(
+                            content: Text(
+                                'Console copied to clipboard'),
+                            duration: Duration(seconds: 2),
+                          ));
+                        }
+                      : null,
+                  child: Container(
+                    color: const Color(0xFF0D0D0D),
+                    child: SelectableText(
+                      _logs[i],
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        color: Color(0xFF00C853),
+                      ),
+                    ),
+                  ),
                 ),
+              ),
+            ),
+          );
+
+          // ── Command bar — pinned below the console, never scrolls away ──
+          final commandBar = Container(
+            color: const Color(0xFF1A1A1A),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                const Text('> ', style: TextStyle(color: Color(0xFF00C853), fontFamily: 'monospace', fontSize: 14)),
+                Expanded(
+                  child: TextField(
+                    controller: _commandController,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    decoration: const InputDecoration(hintText: 'Enter server command...', border: InputBorder.none),
+                    onSubmitted: (_) => _sendCommand(),
+                  ),
+                ),
+                IconButton(icon: const Icon(Icons.send), onPressed: _sendCommand),
+              ],
+            ),
+          );
+
+          // ── Console column: header + scrolling list (with its own
+          // scroll-to-top/bottom buttons) + pinned command bar ──
+          final consoleColumn = Column(
+            children: [
+              consoleHeader,
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    consoleList,
+                    Positioned(
+                      top: 8,
+                      right: 16,
+                      child: FloatingActionButton.small(
+                        heroTag: 'console_scroll_top',
+                        onPressed: () => _consoleScrollController.animateTo(
+                            0,
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeOut),
+                        backgroundColor: const Color(0xFF1A1A1A),
+                        child: const Icon(Icons.keyboard_arrow_up, color: Colors.grey),
+                      ),
+                    ),
+                    if (_showScrollDown)
+                      Positioned(
+                        bottom: 12,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _userScrolledUp = false;
+                              _showScrollDown = false;
+                            });
+                            _consoleScrollController.animateTo(
+                              _consoleScrollController.position.maxScrollExtent,
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00C853),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4)],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.keyboard_arrow_down, color: Colors.black, size: 20),
+                                SizedBox(width: 4),
+                                Text("Jump to Bottom", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              commandBar,
+            ],
+          );
+
+          // Stats always on top (own scroll if it overflows), console
+          // always fills the rest of the space below it — the console's
+          // size stays fixed as logs come in; only its internal list
+          // scrolls, and the command bar stays pinned under it.
+          return Column(
+            children: [
+              statsPanel,
+              const Divider(height: 1, color: Color(0xFF2A2A2A)),
+              Expanded(child: consoleColumn),
             ],
           );
         },
@@ -1306,14 +1316,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final s = _currentStats;
     final isOnline = _server.isRunning;
     final isPhone = width < 600;
-    final crossAxisCount = width < 400
-        ? 2
-        : width < 600
-            ? 2
-            : width < 900
-                ? 4
-                : 4;
-    final cardAspect = width < 400 ? 1.6 : 1.4;
+    // There are 8 stat cards — only use column counts that divide evenly
+    // into 8 (2, 4, 8) so every row is full and no row looks lopsided.
+    final crossAxisCount = width < 500
+        ? 2 // 4 rows of 2
+        : width < 1000
+            ? 4 // 2 rows of 4
+            : 8; // 1 row of 8
+    final cardAspect = crossAxisCount == 2
+        ? 2.1
+        : crossAxisCount == 4
+            ? 1.5
+            : 1.7;
 
     Color tpsColor() {
       if (s.tps >= 18) return Colors.green;
@@ -1343,7 +1357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Container(
       color: const Color(0xFF111111),
-      padding: EdgeInsets.all(isPhone ? 12 : 16),
+      padding: EdgeInsets.all(isPhone ? 10 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1433,7 +1447,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
 
-          SizedBox(height: isPhone ? 12 : 20),
+          SizedBox(height: isPhone ? 8 : 12),
 
           // Stats grid
           GridView.count(
@@ -1441,8 +1455,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             shrinkWrap: true,
             physics:
                 const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: isPhone ? 8 : 12,
-            mainAxisSpacing: isPhone ? 8 : 12,
+            crossAxisSpacing: isPhone ? 6 : 10,
+            mainAxisSpacing: isPhone ? 6 : 10,
             childAspectRatio: cardAspect,
             children: [
               _statCard(
@@ -1559,7 +1573,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     bool isPhone = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(isPhone ? 10 : 12),
+      padding: EdgeInsets.all(isPhone ? 6 : 8),
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(10),
@@ -1582,6 +1596,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   label,
                   style: TextStyle(
                     fontSize: isPhone ? 10 : 11,
+                    height: 1.0,
                     color: color.withValues(alpha: 0.7),
                     fontWeight: FontWeight.w500,
                   ),
@@ -1593,18 +1608,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Text(
             value,
             style: TextStyle(
-              fontSize: isPhone ? 16 : 22,
+              fontSize: isPhone ? 14 : 17,
+              height: 1.0,
               fontWeight: FontWeight.w500,
               color: color,
               fontFamily: 'monospace',
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           Text(
             sublabel,
             style: TextStyle(
               fontSize: isPhone ? 9 : 10,
+              height: 1.0,
               color: Colors.grey,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

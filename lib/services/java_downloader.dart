@@ -87,9 +87,18 @@ class JavaDownloader {
         await file.parent.create(recursive: true);
         final sink = file.openWrite();
 
+        DateTime lastEmit = DateTime.fromMillisecondsSinceEpoch(0);
+        const throttle = Duration(milliseconds: 150);
+
         await for (final chunk in response.stream) {
           sink.add(chunk);
           received += chunk.length;
+          final now = DateTime.now();
+          final isLast = total > 0 && received >= total;
+          if (now.difference(lastEmit) < throttle && !isLast) {
+            continue;
+          }
+          lastEmit = now;
           if (total > 0) {
             _emit(
               'Downloading $label... '
