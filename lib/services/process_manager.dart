@@ -219,7 +219,6 @@ class ServerProcess {
     final javaHome =
         await PlatformService.getJavaHome(javaVer);
 
-    // Use forward slashes for java path only
     final javaExec = Platform.isWindows
         ? '$javaHome\\bin\\java.exe'
         : '$javaHome/bin/java';
@@ -228,54 +227,60 @@ class ServerProcess {
         File(p.join(serverPath, '.is_fabric'))
             .existsSync();
 
-    String startCmd;
-    if (Platform.isWindows) {
-      // On Windows use cmd.exe directly, not busybox
-      // This avoids all path conversion issues
-      final jar = isFabric
-          ? 'fabric-server-launch.jar'
-          : 'server.jar';
-      startCmd = serverType == 'forge'
-          ? 'if exist "$serverPath\\run.bat" '
-              '(cd /d "$serverPath" && run.bat) '
-              'else (cd /d "$serverPath" && '
-              '"$javaExec" -Xmx${ramMb}M '
-              '-Xms${ramMb ~/ 2}M '
-              '-jar server.jar nogui)'
-          : 'cd /d "$serverPath" && '
-              '"$javaExec" -Xmx${ramMb}M '
-              '-Xms${ramMb ~/ 2}M '
-              '-jar "$jar" nogui';
-    } else {
-      startCmd = isFabric
-          ? 'cd "$serverPath" && '
-              '"$javaExec" '
-              '-Xmx${ramMb}M -Xms${ramMb ~/ 2}M '
-              '-jar fabric-server-launch.jar nogui'
-          : serverType == 'forge'
-              ? 'cd "$serverPath" && '
-                  'if [ -f run.sh ]; then '
-                  'bash run.sh nogui; '
-                  'else "$javaExec" '
-                  '-Xmx${ramMb}M -Xms${ramMb ~/ 2}M '
-                  '-jar server.jar nogui; fi'
-              : 'cd "$serverPath" && '
-                  '"$javaExec" '
-                  '-Xmx${ramMb}M -Xms${ramMb ~/ 2}M '
-                  '-jar server.jar nogui';
-    }
+    // Java arguments as a real list, not a hand-built shell string.
+    // Process.start quotes each element correctly for the target OS on
+    // its own — building one long "cd /d "..." && "..." -jar ..." string
+    // and handing it to `cmd.exe /c` was the actual bug: Dart has to
+    // re-quote that whole string as a single argv element, and cmd.exe's
+    // parsing of a fully-quoted /c argument containing its own nested
+    // quotes + && is notoriously broken, producing exactly "The
+    // filename, directory name, or volume label syntax is incorrect."
+    final jarArgs = <String>[
+      '-Xmx${ramMb}M',
+      '-Xms${ramMb ~/ 2}M',
+      '-jar',
+      isFabric ? 'fabric-server-launch.jar' : 'server.jar',
+      'nogui',
+    ];
 
-    print('[process_manager] startCmd: $startCmd');
-
-    // On Windows use cmd.exe directly
     if (Platform.isWindows) {
-      _process = await Process.start(
-          'cmd.exe', ['/c', startCmd],
-          runInShell: false,
-          workingDirectory: serverPath);
+      final runBat = File(p.join(serverPath, 'run.bat'));
+      if (serverType == 'forge' && runBat.existsSync()) {
+        print('[process_manager] launching run.bat in $serverPath');
+        // .bat files aren't directly executable — they still need
+        // cmd.exe, but with a single bare filename and no embedded
+        // quotes/paths in the argument itself, so none of the /c
+        // re-quoting issues above apply here.
+        _process = await Process.start(
+          'cmd.exe',
+          ['/c', 'run.bat'],
+          workingDirectory: serverPath,
+        );
+      } else {
+        print('[process_manager] launching $javaExec ${jarArgs.join(' ')}');
+        _process = await Process.start(
+          javaExec,
+          jarArgs,
+          workingDirectory: serverPath,
+        );
+      }
     } else {
-      _process =
-          await PlatformService.startProcess(startCmd);
+      final runSh = File(p.join(serverPath, 'run.sh'));
+      if (serverType == 'forge' && runSh.existsSync()) {
+        print('[process_manager] launching run.sh in $serverPath');
+        _process = await Process.start(
+          'bash',
+          ['run.sh', 'nogui'],
+          workingDirectory: serverPath,
+        );
+      } else {
+        print('[process_manager] launching $javaExec ${jarArgs.join(' ')}');
+        _process = await Process.start(
+          javaExec,
+          jarArgs,
+          workingDirectory: serverPath,
+        );
+      }
     }
 
     _isRunning = true;

@@ -35,6 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   bool _userScrolledUp = false;
   bool _showScrollDown = false;
+  bool _programmaticScroll = false;
 
   final ConsoleLogService _consoleLog =
       ConsoleLogService();
@@ -121,7 +122,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
 
       _drive.status.listen((msg) {
-        if (mounted) setState(() => _logs.add(msg));
+        if (mounted) _appendLog(msg);
       });
 
       // 3. Since we are inside an async callback, context might be stale
@@ -137,6 +138,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     void _setupConsoleScrollListener() {
     _consoleScrollController.addListener(() {
+      // Ignore notifications caused by our own jumpTo/animateTo calls —
+      // otherwise auto-scrolling to the bottom fires this exact same
+      // listener and can falsely flag "user scrolled up", which then
+      // silently blocks all future auto-scrolling.
+      if (_programmaticScroll) return;
       if (!_consoleScrollController.hasClients) return;
       final pos = _consoleScrollController.position;
       final atBottom =
@@ -150,17 +156,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _scrollConsoleToBottom({bool force = false}) {
+  Future<void> _scrollConsoleToBottom({bool force = false, bool animate = false}) async {
     if (!force && _userScrolledUp) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_consoleScrollController.hasClients) {
-        _consoleScrollController.animateTo(
-          _consoleScrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || !_consoleScrollController.hasClients) return;
+    final target = _consoleScrollController.position.maxScrollExtent;
+    _programmaticScroll = true;
+    if (animate) {
+      await _consoleScrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    } else {
+      _consoleScrollController.jumpTo(target);
+    }
+    _programmaticScroll = false;
+    if (mounted) {
+      setState(() {
+        _userScrolledUp = false;
+        _showScrollDown = false;
+      });
+    }
   }
 
   void _parseServerOutput(String line) {
@@ -341,7 +358,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ramMb: _ramMb,
         version: _activeServer?.version ?? '1.20.4',
         onStatus: (msg) {
-          if (mounted) setState(() => _logs.add(msg));
+          if (mounted) _appendLog(msg);
         },
         properties: _activeServer?.properties,
         serverType: _activeServer?.serverType.name ?? 'vanilla',
@@ -851,6 +868,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(width: 8),
                 const Text('Console', style: TextStyle(fontSize: 13, color: Colors.grey)),
                 const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    if (_logs.isEmpty) return;
+                    Clipboard.setData(ClipboardData(text: _logs.join('\n')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Console copied to clipboard'),
+                      duration: Duration(seconds: 2),
+                    ));
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.copy_all, size: 12, color: Colors.grey),
+                        SizedBox(width: 4),
+                        Text('Copy all', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 if (_activeServer != null)
                   GestureDetector(
                     onTap: _openLogFile,
@@ -878,34 +921,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final consoleList = Scrollbar(
             controller: _consoleScrollController,
             thumbVisibility: true,
-            child: ListView.builder(
-              controller: _consoleScrollController,
-              padding: const EdgeInsets.all(12),
-              itemCount: _logs.length,
-              itemBuilder: (_, i) => ExcludeSemantics(
-                child: GestureDetector(
-                  onLongPress: i == 0
-                      ? () {
-                          if (_logs.isEmpty) return;
-                          Clipboard.setData(ClipboardData(
-                              text: _logs.join('\n')));
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(const SnackBar(
-                            content: Text(
-                                'Console copied to clipboard'),
-                            duration: Duration(seconds: 2),
-                          ));
-                        }
-                      : null,
-                  child: Container(
-                    color: const Color(0xFF0D0D0D),
-                    child: SelectableText(
-                      _logs[i],
-                      style: const TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 12,
-                        color: Color(0xFF00C853),
-                      ),
+            child: SelectionArea(
+              child: ListView.builder(
+                controller: _consoleScrollController,
+                padding: const EdgeInsets.all(12),
+                itemCount: _logs.length,
+                itemBuilder: (_, i) => Container(
+                  color: const Color(0xFF0D0D0D),
+                  child: Text(
+                    _logs[i],
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      color: Color(0xFF00C853),
                     ),
                   ),
                 ),
@@ -965,11 +993,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _userScrolledUp = false;
                               _showScrollDown = false;
                             });
-                            _consoleScrollController.animateTo(
-                              _consoleScrollController.position.maxScrollExtent,
-                              duration: const Duration(milliseconds: 400),
-                              curve: Curves.easeOut,
-                            );
+                            _scrollConsoleToBottom(
+                                force: true, animate: true);
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
