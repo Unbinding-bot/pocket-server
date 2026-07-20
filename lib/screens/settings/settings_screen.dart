@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../services/drive_service.dart';
@@ -11,8 +10,7 @@ class SettingsScreen extends StatefulWidget {
   final String? driveEmail;
   final VoidCallback onDriveSignOut;
   final VoidCallback onDriveSignIn;
-  final String playitBinaryPath;
-  final Function(String) onPlayitPathChanged;
+  final Future<String> Function() onResetAgent;
   final String tunnelAddress;
   final Function(String) onTunnelAddressChanged;
   final String tunnelStatus;
@@ -28,8 +26,7 @@ class SettingsScreen extends StatefulWidget {
     required this.driveEmail,
     required this.onDriveSignOut,
     required this.onDriveSignIn,
-    required this.playitBinaryPath,
-    required this.onPlayitPathChanged,
+    required this.onResetAgent,
     required this.tunnelAddress,
     required this.onTunnelAddressChanged,
     required this.tunnelStatus,
@@ -43,21 +40,17 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   
   
-  late TextEditingController _playitPathController;
   late TextEditingController _tunnelAddressController;
 
   @override
   void initState() {
     super.initState();
-    _playitPathController =
-        TextEditingController(text: widget.playitBinaryPath);
     _tunnelAddressController =
         TextEditingController(text: widget.tunnelAddress);
   }
 
   @override
   void dispose() {
-    _playitPathController.dispose();
     _tunnelAddressController.dispose();
     super.dispose();
   }
@@ -81,16 +74,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           FilledButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              await Process.run('wsl.exe', [
-                '-e',
-                widget.playitBinaryPath,
-                'reset',
-              ]);
+              final message = await widget.onResetAgent();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Agent reset. Reclaim at playit.gg'),
-                    duration: Duration(seconds: 3),
+                  SnackBar(
+                    content: Text(message),
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               }
@@ -206,44 +195,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _sectionHeader('Playit.gg Tunnel'),
           _settingsCard(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Playit binary path (WSL2)',
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _playitPathController,
-                      decoration: InputDecoration(
-                        hintText: '/home/username/playit',
-                        filled: true,
-                        fillColor: const Color(0xFF0D0D0D),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide.none,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.save, size: 18),
-                          onPressed: () {
-                            widget.onPlayitPathChanged(
-                                _playitPathController.text.trim());
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Path saved'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(color: Colors.white10, height: 1),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                 child: Column(

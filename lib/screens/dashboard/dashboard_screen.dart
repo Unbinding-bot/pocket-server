@@ -61,7 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Tunnel
   TunnelStatus _tunnelStatus = TunnelStatus.stopped;
   String _tunnelAddress = '';
-  String _playitBinaryPath = '/home/unbinding/playit';
 
   // Drive
   bool _driveSignedIn = false;
@@ -396,7 +395,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_tunnel.isRunning) {
       await _tunnel.stop();
     } else {
-      await _tunnel.start(playitBinaryPath: _playitBinaryPath);
+      // No more manual binary path — TunnelService downloads and runs
+      // playit itself the first time it's needed.
+      await _tunnel.start();
     }
     setState(() {});
   }
@@ -679,9 +680,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             await _toggleDriveSignIn();
             if (mounted) Navigator.pop(context);
           },
-          playitBinaryPath: _playitBinaryPath,
-          onPlayitPathChanged: (p) =>
-              setState(() => _playitBinaryPath = p),
+          onResetAgent: () => _tunnel.resetAgent(),
           tunnelAddress: _tunnelAddress,
           onTunnelAddressChanged: (a) =>
               setState(() => _tunnelAddress = a),
