@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../models/app_state.dart';
 import '../../models/server_model.dart';
@@ -19,6 +20,7 @@ import '../../services/java_downloader.dart';
 import '../setup_wizard/drive_browser_screen.dart';
 import '../../services/platform_service.dart';
 import '../../services/console_log_service.dart';
+import '../../services/settings_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -60,6 +62,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Tunnel
   TunnelStatus _tunnelStatus = TunnelStatus.stopped;
+  String? _tunnelClaimUrl;
+  TunnelProviderType _tunnelProviderType = TunnelProviderType.playit;
+  String _frpServerAddr = '';
+  int _frpServerPort = 7000;
+  String _frpToken = '';
+  int _frpRemotePort = 25565;
+  SettingsService? _settings;
   String _tunnelAddress = '';
 
   // Drive
@@ -82,6 +91,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     // 1. Mark this callback as 'async'
     WidgetsBinding.instance.addPostFrameCallback((_) async { 
+      _settings = await SettingsService.getInstance();
+      await _loadTunnelSettings();
+
       // Set default server path for platform
       final serversBase = await PlatformService.getServersPath();
     
@@ -111,6 +123,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (status == TunnelStatus.connected &&
                 _tunnel.tunnelAddress != null) {
               _tunnelAddress = _tunnel.tunnelAddress!;
+            }
+            if (status == TunnelStatus.needsClaim) {
+              _tunnelClaimUrl = _tunnel.claimUrl;
+            } else if (status == TunnelStatus.connected) {
+              _tunnelClaimUrl = null;
             }
           });
         }
@@ -681,11 +698,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (mounted) Navigator.pop(context);
           },
           onResetAgent: () => _tunnel.resetAgent(),
+          claimUrl: _tunnelClaimUrl,
           tunnelAddress: _tunnelAddress,
           onTunnelAddressChanged: (a) =>
               setState(() => _tunnelAddress = a),
           tunnelStatus: _tunnelStatus.name,
           tunnelLogs: _tunnelLogs,
+          currentProvider: _tunnelProviderType,
+          onProviderChanged: (type) async {
+            setState(() => _tunnelProviderType = type);
+            await _tunnel.setProvider(type);
+            if (type == TunnelProviderType.frp) {
+              _tunnel.configureFrp(
+                serverAddr: _frpServerAddr,
+                serverPort: _frpServerPort,
+                authToken: _frpToken,
+                remotePort: _frpRemotePort,
+              );
+            }
+          },
+          frpServerAddr: _frpServerAddr,
+          frpServerPort: _frpServerPort,
+          frpToken: _frpToken,
+          frpRemotePort: _frpRemotePort,
+          onFrpConfigChanged: ({
+            required serverAddr,
+            required serverPort,
+            required authToken,
+            required remotePort,
+          }) {
+            setState(() {
+              _frpServerAddr = serverAddr;
+              _frpServerPort = serverPort;
+              _frpToken = authToken;
+              _frpRemotePort = remotePort;
+            });
+            _tunnel.configureFrp(
+              serverAddr: serverAddr,
+              serverPort: serverPort,
+              authToken: authToken,
+              remotePort: remotePort,
+            );
+          },
         ),
       ),
     );
@@ -1026,12 +1080,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // scrolls, and the command bar stays pinned under it.
           return Column(
             children: [
+              if (_tunnelStatus == TunnelStatus.needsClaim &&
+                  _tunnelClaimUrl != null)
+                _buildClaimBanner(),
               statsPanel,
               const Divider(height: 1, color: Color(0xFF2A2A2A)),
               Expanded(child: consoleColumn),
             ],
           );
         },
+      ),
+    );
+  }
+
+  // One-time setup step for playit: it can't connect until this link is
+  // opened and approved in a browser. Surfaced directly on the dashboard
+  // rather than buried in console output or a settings screen, since
+  // missing this looked like the tunnel just being permanently stuck.
+  Widget _buildClaimBanner() {
+    return Container(
+      width: double.infinity,
+      color: Colors.orange.withValues(alpha: 0.15),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.link, size: 16, color: Colors.orange),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'One-time step: open this link to finish setting up your tunnel.',
+              style: TextStyle(fontSize: 12, color: Colors.orange),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              final url = _tunnelClaimUrl;
+              if (url == null) return;
+              final uri = Uri.tryParse(url);
+              if (uri != null) await launchUrl(uri);
+            },
+            child: const Text('Open link'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy, size: 16, color: Colors.orange),
+            tooltip: 'Copy link',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: _tunnelClaimUrl!));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Link copied'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
