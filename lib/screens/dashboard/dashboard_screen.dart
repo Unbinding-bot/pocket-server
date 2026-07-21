@@ -408,6 +408,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ─── Tunnel ────────────────────────────────────────────────
+  Future<void> _loadTunnelSettings() async {
+    final settings = _settings;
+    if (settings == null) return;
+
+    // If nothing's been saved yet (fresh install), fall back to the
+    // platform-aware default rather than blindly trusting the stored
+    // 'playit' default — playit can't run on Android at all.
+    final hasSavedProvider =
+        settings.getString('tunnel_provider').isNotEmpty;
+    final provider = hasSavedProvider
+        ? settings.tunnelProvider
+        : (TunnelProviderType.playit.availableOnThisPlatform
+            ? TunnelProviderType.playit
+            : TunnelProviderType.portForward);
+
+    final frpAddr = settings.frpServerAddr;
+    final frpPort = settings.frpServerPort;
+    final frpToken = settings.frpToken;
+    final frpRemotePort = settings.frpRemotePort;
+    final savedAddress = settings.tunnelAddress;
+
+    if (!mounted) return;
+    setState(() {
+      _tunnelProviderType = provider;
+      _frpServerAddr = frpAddr;
+      _frpServerPort = frpPort;
+      _frpToken = frpToken;
+      _frpRemotePort = frpRemotePort;
+      if (savedAddress.isNotEmpty) _tunnelAddress = savedAddress;
+    });
+
+    await _tunnel.setProvider(provider);
+    if (provider == TunnelProviderType.frp) {
+      _tunnel.configureFrp(
+        serverAddr: frpAddr,
+        serverPort: frpPort,
+        authToken: frpToken,
+        remotePort: frpRemotePort,
+      );
+    }
+  }
+
   Future<void> _toggleTunnel() async {
     if (_tunnel.isRunning) {
       await _tunnel.stop();
@@ -700,13 +742,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onResetAgent: () => _tunnel.resetAgent(),
           claimUrl: _tunnelClaimUrl,
           tunnelAddress: _tunnelAddress,
-          onTunnelAddressChanged: (a) =>
-              setState(() => _tunnelAddress = a),
+          onTunnelAddressChanged: (a) {
+            setState(() => _tunnelAddress = a);
+            _settings?.setTunnelAddress(a);
+          },
           tunnelStatus: _tunnelStatus.name,
           tunnelLogs: _tunnelLogs,
           currentProvider: _tunnelProviderType,
           onProviderChanged: (type) async {
             setState(() => _tunnelProviderType = type);
+            await _settings?.setTunnelProvider(type);
             await _tunnel.setProvider(type);
             if (type == TunnelProviderType.frp) {
               _tunnel.configureFrp(
@@ -733,6 +778,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _frpToken = authToken;
               _frpRemotePort = remotePort;
             });
+            _settings?.setFrpConfig(
+              serverAddr: serverAddr,
+              serverPort: serverPort,
+              authToken: authToken,
+              remotePort: remotePort,
+            );
             _tunnel.configureFrp(
               serverAddr: serverAddr,
               serverPort: serverPort,
